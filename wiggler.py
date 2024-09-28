@@ -118,3 +118,8 @@ stop_button.grid(row=1, column=1, padx=10, pady=10)
 root.geometry("300x150")  # Set the window size
 root.resizable(False, False)  # Make the window size fixed
 root.mainloop()
+
+
+# pip install pyinstaller
+# pyinstaller --onefile --windowed wiggler.py
+# pyinstaller --onefile --windowed --icon=icon.ico wiggler.py #to set desirable icon
