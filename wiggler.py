@@ -61,9 +61,20 @@ def start_scrolling():
     running = True
     while running:
         move_mouse()  # Move the mouse slightly
+        random_app_switch()  # Switch apps randomly
         switch_tabs()  # Switch tabs randomly
         scroll_down()  # Scroll down randomly
         scroll_up()  # Scroll up randomly
+
+
+# Function to switch to a random app
+def random_app_switch():
+    app_jumps = random.randint(1, 7)
+    pyautogui.keyDown("alt")  # Use 'command' for macOS
+    for _ in range(app_jumps):
+        pyautogui.press("tab")
+        time.sleep(0.3)
+    pyautogui.keyUp("alt")
 
 
 # Function to stop the scrolling process
