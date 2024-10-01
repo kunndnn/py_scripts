@@ -1,125 +1,156 @@
-import pyautogui
-import random
-import time
-import threading
 import tkinter as tk
+from threading import Thread
+import pyautogui
+import time
+import keyboard  # To detect 'q' and 'r' key press to stop or restart the script
+import random  # To generate random movement values
+from PIL import Image, ImageDraw  # To create tray icon
+import pystray  # For system tray icon
 
-# Global flag to control when to exit the script
+# Global variables to control the loop and tray icon
 running = False
-start_time = 0
+tray_icon = None  # Declare tray_icon globally
+q_press_count = 0  # Counter for 'q' key presses
+r_press_count = 0  # Counter for 'r' key presses
+q_press_threshold = 5  # Number of 'q' presses to stop the script
+r_press_threshold = 5  # Number of 'r' presses to restart the script
 
-# Define time delay between switching apps and scrolling
-switch_delay = 4  # Increased delay between app switches to make it more noticeable
-scroll_delay = 2  # Adjust the delay time between scroll actions
-
-# Screen dimensions (pyautogui.size() will give you the screen width and height)
-screen_width, screen_height = pyautogui.size()
-
-
-def random_app_switch():
-    app_jumps = random.randint(1, 7)
-    pyautogui.keyDown('alt')  # Use 'command' for macOS
-    for _ in range(app_jumps):
-        pyautogui.press('tab')
-        time.sleep(0.3)  # Small delay between each tab press to make it noticeable
-    pyautogui.keyUp('alt')
+# Total number of tabs you want to consider (change this according to your needs)
+total_tabs = (
+    10  # Adjust this value to match the number of tabs you want to cycle through
+)
 
 
-def random_scroll():
-    scroll_direction = random.choice(['up', 'down'])
-    scroll_amount = random.randint(50, 200)  # Increase the scroll amount for more noticeable movement
-
-    if scroll_direction == 'down':
-        pyautogui.scroll(-scroll_amount)  # Scroll down
-    else:
-        pyautogui.scroll(scroll_amount)  # Scroll up
-
-
-def random_mouse_move():
-    move_x = random.randint(-50, 50)  # Random x-axis movement
-    move_y = random.randint(-50, 50)  # Random y-axis movement
-
-    current_x, current_y = pyautogui.position()
-
-    new_x = max(0, min(screen_width, current_x + move_x))
-    new_y = max(0, min(screen_height, current_y + move_y))
-
-    pyautogui.moveTo(new_x, new_y, duration=0.5)  # Smooth movement over 0.5 seconds
+# Function to switch to a random tab
+def switch_tabs():
+    random_tab = random.randint(0, total_tabs - 1)  # Select a random tab index
+    for _ in range(random_tab):
+        pyautogui.hotkey("ctrl", "tab")  # Switch to the next tab
+        time.sleep(0.1)  # Short delay to ensure the tab switch occurs
+    time.sleep(1)  # Delay after switching
 
 
-def run_script():
-    global running, start_time
-    start_time = time.time()
+# Function to scroll down randomly
+def scroll_down():
+    scroll_amount = random.randint(100, 1000)  # Generate a random scroll amount
+    pyautogui.scroll(-scroll_amount)  # Scroll down
+    time.sleep(2)  # Increased delay to slow down scrolling
+
+
+# Function to scroll up randomly
+def scroll_up():
+    scroll_amount = random.randint(100, 1000)  # Generate a random scroll amount
+    pyautogui.scroll(scroll_amount)  # Scroll up
+    time.sleep(2)  # Increased delay to slow down scrolling
+
+
+# Function to move the mouse slightly
+def move_mouse():
+    # Generate random movement in the range of -5 to 5 pixels for both x and y
+    move_x = random.randint(-5, 5)
+    move_y = random.randint(-5, 5)
+    pyautogui.move(
+        move_x, move_y, duration=0.3
+    )  # Increased duration for smoother movement
+    time.sleep(0.5)  # Increased delay after mouse movement
+
+
+# Function to run the tab switching and scrolling process
+def start_scrolling():
+    global running
     running = True
     while running:
-        random_app_switch()
-        time.sleep(switch_delay)
-        random_scroll()
-        time.sleep(scroll_delay)
-        random_mouse_move()
-        time.sleep(1)
+        move_mouse()  # Move the mouse slightly
+        switch_tabs()  # Switch tabs randomly
+        scroll_down()  # Scroll down randomly
+        scroll_up()  # Scroll up randomly
 
 
-def start_script():
-    threading.Thread(target=run_script, daemon=True).start()
-    update_timer()  # Start updating the timer display
-
-
-def stop_script():
+# Function to stop the scrolling process
+def stop_scrolling():
     global running
     running = False
-    timer_label.config(text="Timer: 00:00:00")  # Reset timer display
+    # print("Quit")  # Print confirmation to terminal when quitting
 
 
-def update_timer():
-    if running:
-        elapsed_time = int(time.time() - start_time)
-        minutes, seconds = divmod(elapsed_time, 60)
-        hours, minutes = divmod(minutes, 60)
-        timer_label.config(text=f"Timer: {hours:02}:{minutes:02}:{seconds:02}")
-        timer_label.after(1000, update_timer)  # Update timer every second
+# Function to restart the scrolling process
+def restart_scrolling():
+    global running, thread, r_press_count
+    stop_scrolling()  # Stop current scrolling process
+    # # print("Restart")  # Print confirmation to terminal when restarting
+    r_press_count = 0  # Reset the 'r' key press count
+    run_in_thread()  # Restart the process
 
 
-# GUI setup
-root = tk.Tk()
-root.title("Random App Switcher")
-root.configure(bg="#282c34")  # Background color
-
-# Timer label
-timer_label = tk.Label(
-    root, text="Timer: 00:00:00", font=("Helvetica", 14), bg="#282c34", fg="#61dafb"
-)
-timer_label.grid(row=0, column=0, columnspan=2, padx=10, pady=20)
-
-# Start button
-start_button = tk.Button(
-    root,
-    text="Start",
-    command=start_script,
-    width=10,
-    bg="#61dafb",
-    fg="white",
-    font=("Helvetica", 12),
-)
-start_button.grid(row=1, column=0, padx=10, pady=10)
-
-# Stop button
-stop_button = tk.Button(
-    root,
-    text="Stop",
-    command=stop_script,
-    width=10,
-    bg="#ff5733",
-    fg="white",
-    font=("Helvetica", 12),
-)
-stop_button.grid(row=1, column=1, padx=10, pady=10)
-
-root.geometry("300x150")  # Set the window size
-root.resizable(False, False)  # Make the window size fixed
-root.mainloop()
+# Threaded function to avoid blocking the GUI
+def run_in_thread():
+    global thread
+    thread = Thread(target=start_scrolling)
+    thread.start()
 
 
-# pip install pyinstaller
-# pyinstaller --onefile --windowed wiggler.py
-# pyinstaller --onefile --windowed --icon=icon.ico wiggler.py #to set desirable icon
+# Function to create tray icon image
+def create_image(width, height, color1, color2):
+    image = Image.new("RGB", (width, height), color1)
+    dc = ImageDraw.Draw(image)
+    dc.rectangle((width // 2, 0, width, height // 2), fill=color2)
+    dc.rectangle((0, height // 2, width // 2, height), fill=color2)
+    return image
+
+
+# System Tray Menu
+def setup_tray_icon():
+    global tray_icon
+    icon_image = create_image(64, 64, "black", "blue")
+    tray_icon = pystray.Icon(
+        "Tab Switcher",
+        icon_image,
+        menu=pystray.Menu(
+            pystray.MenuItem("Start", lambda: run_in_thread()),
+            pystray.MenuItem("Stop", lambda: stop_scrolling()),
+            pystray.MenuItem("Quit", lambda: quit_app()),
+        ),
+    )
+    tray_icon.run()
+
+
+# Quit application
+def quit_app():
+    stop_scrolling()  # Stop the scrolling
+    if tray_icon is not None:
+        tray_icon.stop()  # Stop the tray icon
+    # # print("Quit")  # Print confirmation to terminal when quitting
+
+
+# Function to handle keypress events and implement counter logic
+def handle_keypress(e):
+    global q_press_count, r_press_count, running
+
+    if e.name == "q":
+        q_press_count += 1
+        # print(f"'q' pressed: {q_press_count} times")
+        if q_press_count >= q_press_threshold:
+            stop_scrolling()  # Stop the script if 'q' is pressed 5 times
+    elif e.name == "r":
+        r_press_count += 1
+        # print(f"'r' pressed: {r_press_count} times")
+        if r_press_count >= r_press_threshold:
+            restart_scrolling()  # Restart the script if 'r' is pressed 5 times
+    else:
+        # Reset counters if any other key is pressed
+        # print(f"Other key '{e.name}' pressed. Resetting counters.")
+        q_press_count = 0
+        r_press_count = 0
+
+
+# Start listening to keypresses using the keyboard module
+keyboard.on_press(handle_keypress)
+
+if __name__ == "__main__":
+
+    tray_icon_thread = Thread(target=setup_tray_icon)
+    tray_icon_thread.start()
+    keyboard.wait()  # Keep the script running to listen for keypresses
+
+# to generate executable file # and get the file from dest directory
+# pyinstaller --onefile --windowed main.py
