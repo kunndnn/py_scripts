@@ -1,3 +1,10 @@
-pillow==10.4.0
-PyAutoGUI==0.9.54
-pyinstaller==6.10.0
+#libs for wiggler
+pillow==10.4.0           # Python Imaging Library (PIL) for image manipulation
+PyAutoGUI==0.9.54        # For GUI automation, controlling the mouse/keyboard and taking screenshots
+pyinstaller==6.10.0      # For bundling the Python script into standalone executables
+
+# libs for face
+opencv-python==4.8.0.76  # For handling images and video
+fer==22.4.0              # For facial expression recognition
+tensorflow==2.13.0       # Required by the FER library for emotion detection
+matplotlib==3.7.2        # Optional, for displaying images (used in previous examples)
