@@ -6,3 +6,6 @@
 # pip install pyinstaller
 # pyinstaller --onefile --windowed wiggler.py
 # pyinstaller --onefile --windowed --icon=icon.ico wiggler.py #to set desirable icon
+
+# activate environment in Windows
+venv\scripts\activate
