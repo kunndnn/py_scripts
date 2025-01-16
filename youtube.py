@@ -2,8 +2,15 @@ import yt_dlp
 
 def download_video_with_audio(url):
     ydl_opts = {
-        "format": "best",   # Downloads the best available combined stream (video + audio)
-        "noplaylist": True, # Ensure only a single video is downloaded
+        "format": "bestvideo+bestaudio/best",  # Ensure best video and best audio are merged
+        "merge_output_format": "mp4",  # Specify the output format after merging
+        "noplaylist": True,  # Download a single video
+        "postprocessors": [
+            {
+                "key": "FFmpegVideoConvertor",
+                "preferedformat": "mp4",  # Convert to mp4 if necessary
+            }
+        ],
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
