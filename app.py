@@ -1,5 +1,6 @@
 import sys
 import os
+import base64
 from flask import Flask, request, render_template
 
 # Add the scripts folder to the Python path
@@ -21,29 +22,38 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    result = None
+    results = None
+    image_data = None  
+
     if request.method == 'POST':
-        # Check if a file was uploaded
         if 'file' not in request.files:
             return render_template('index.html', error="No file uploaded!")
-        
+
         file = request.files['file']
+
         if file.filename == '':
             return render_template('index.html', error="No file selected!")
-        
-        # Save the uploaded file
+
+        # Save the file temporarily
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(file_path)
 
-        # Classify the image
+        # Read file as base64 buffer for preview
+        with open(file_path, "rb") as img_file:
+            image_data = base64.b64encode(img_file.read()).decode('utf-8')
+
+        # Classify the image using the saved file path
         try:
-            result = classify_word_image(file_path)
+            results = classify_word_image(file_path)
+            results = list(set(results))
         except Exception as e:
             return render_template('index.html', error=f"Error processing image: {str(e)}")
-    
-    return render_template('index.html', result=result)
+
+    return render_template("index.html", results=results, image_data=image_data)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,48 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bilingual Script Classifier</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 50px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        .upload-form {
-            margin: 20px 0;
-        }
-        .result {
-            margin-top: 20px;
-            font-weight: bold;
-        }
-        .error {
-            color: red;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Bilingual Script Classifier</h1>
-        <p>Upload an image of a word to classify it as Roman or Gurmukhi script.</p>
-        
-        <form class="upload-form" action="/" method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" accept=".jpg,.jpeg,.png" required>
-            <button type="submit">Upload and Classify</button>
-        </form>
 
-        {% if error %}
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bilingual Script Classifier</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 50px;
+            }
+
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                text-align: center;
+            }
+
+            .upload-form {
+                margin: 20px 0;
+            }
+
+            .result {
+                margin-top: 20px;
+                font-weight: bold;
+            }
+
+            .error {
+                color: red;
+            }
+
+            img{
+                height: 100px;
+                width: auto;
+            }
+        </style>
+        </head>
+
+    <body>
+        <div class="container">
+            <h1>Bilingual Script Classifier</h1>
+            <p>Upload an image of a word to classify it as Roman or Gurmukhi script.</p>
+    
+            <form class="upload-form" action="/" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".jpg,.jpeg,.png" required>
+                <button type="submit">Upload and Classify</button>
+            </form>
+
+            <img src="{{ 'data:image/png;base64,' + image_data if image_data else '' }}"
+                hasImage="{{ 'true' if image_data else 'false' }}" class="image" alt="preview" />
+
+            {% if error %}
             <p class="error">{{ error }}</p>
-        {% endif %}
+            {% endif %}
 
-        {% if result %}
-            <p class="result">The script is: {{ result }}</p>
-        {% endif %}
-    </div>
-</body>
+            {% if results %}
+            <div class="result">
+                <h2>Classification Results:</h2>
+                <ul>
+                    {% for result in results %}
+                    <li>{{ result }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            </div>
+        <script>
+            (function () {
+                //function to show/hide image
+                const displayImage = (display = 'none') => document.querySelector('.image').style.display = display == 'none' ? 'none' : 'block';
+
+                const img = document.querySelector('.image');
+                displayImage(img.getAttribute('hasImage') == "true" ? "block" : "none")
+
+                document.querySelector('input[type="file"]').addEventListener('change', function (e) {
+                    const image = e.target.files[0];
+                    displayImage(); // hide image
+                    if (!image.type.startsWith('image')) {
+                        alert('Please upload a valid image file.');
+                        e.target.value = ''; // empty file input
+                        document.querySelector('.result').innerHTML = "";
+                        return;
+                    }
+
+                    displayImage('block');
+                    document.querySelector('.image').src = URL.createObjectURL(e.target.files[0]); // set image path
+                    document.querySelector('form').submit();
+                });
+
+            })();    
+        </script>
+    </body>
+
 </html>
